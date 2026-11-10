@@ -45,7 +45,18 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient());
         setContentView(web);
 
+        requestStoragePermission();
         waitForServer(0);
+    }
+
+    private void requestStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= 32) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                        new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 7);
+            }
+        }
     }
 
     private void waitForServer(final int attempt) {

@@ -59,6 +59,10 @@ public class TomatoService extends Service {
             if (!data.exists()) {
                 data.mkdirs();
             }
+            File cfg = new File(data, "config.yml");
+            if (!cfg.exists()) {
+                copyAsset("config.yml", cfg);
+            }
 
             ProcessBuilder pb = new ProcessBuilder(
                     bin.getAbsolutePath(), "--server", "--data-dir", data.getAbsolutePath());
