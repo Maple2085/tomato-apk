@@ -1,0 +1,33 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.tomato.reader'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.tomato.reader"
+        minSdk 24
+        // 28 是关键：允许执行应用私有目录里的可执行文件（W^X 限制从 targetSdk 29 开始）
+        targetSdk 28
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
