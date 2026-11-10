@@ -63,6 +63,7 @@ public class TomatoService extends Service {
             if (!cfg.exists()) {
                 copyAsset("config.yml", cfg);
             }
+            normalizeSavePath(cfg);
 
             ProcessBuilder pb = new ProcessBuilder(
                     bin.getAbsolutePath(), "--server", "--data-dir", data.getAbsolutePath());
@@ -89,6 +90,61 @@ public class TomatoService extends Service {
             Log.e(TAG, "launch failed", t);
             updateNotification("启动失败：" + t.getMessage());
         }
+    }
+
+    /**
+     * 老版本生成的 config.yml 里 save_path 是空的（会存到应用私有目录，阅读器看不到）。
+     * 启动前统一改成一个外部可访问的目录。
+     */
+    private void normalizeSavePath(File cfg) {
+        try {
+            String txt = readAll(cfg);
+            String want = pickSaveDir();
+            String patched = txt
+                    .replaceAll("(?m)^save_path:\\s*''\\s*$", "save_path: " + want)
+                    .replaceAll("(?m)^save_path:\\s*\"\"\\s*$", "save_path: " + want);
+            if (!patched.equals(txt)) {
+                writeAll(cfg, patched);
+                Log.i(TAG, "save_path set to " + want);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "normalize config failed", e);
+        }
+    }
+
+    private String pickSaveDir() {
+        File dir = new File("/sdcard/Download/TomatoNovel");
+        try {
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            if (dir.isDirectory() && dir.canWrite()) {
+                return dir.getAbsolutePath();
+            }
+        } catch (Exception ignored) {
+        }
+        File fb = new File(getFilesDir(), "books");
+        fb.mkdirs();
+        return fb.getAbsolutePath();
+    }
+
+    private String readAll(File f) throws Exception {
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        java.io.FileInputStream in = new java.io.FileInputStream(f);
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) > 0) {
+            bos.write(buf, 0, n);
+        }
+        in.close();
+        return new String(bos.toByteArray(), "UTF-8");
+    }
+
+    private void writeAll(File f, String content) throws Exception {
+        java.io.FileOutputStream out = new java.io.FileOutputStream(f);
+        out.write(content.getBytes("UTF-8"));
+        out.getFD().sync();
+        out.close();
     }
 
     private void copyAsset(String name, File dst) throws Exception {

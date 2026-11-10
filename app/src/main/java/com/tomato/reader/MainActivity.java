@@ -20,6 +20,13 @@ public class MainActivity extends Activity {
 
     private static final String HOME_URL = "http://127.0.0.1:18423/";
     private static final int MENU_STOP = 1;
+    private static final int MENU_MODE = 2;
+    private static final String PREFS = "tnd";
+    private static final String DESKTOP_UA =
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                    + "Chrome/120.0.0.0 Safari/537.36";
+
+    private boolean desktopMode = false;
 
     private WebView web;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -37,12 +44,29 @@ public class MainActivity extends Activity {
             startService(svc);
         }
 
+        desktopMode = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean("desktop", false);
+
         web = new WebView(this);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        web.setWebViewClient(new WebViewClient());
+        s.setSupportZoom(true);
+        s.setBuiltInZoomControls(true);
+        s.setDisplayZoomControls(false);
+        applyDisplayMode();
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (desktopMode) {
+                    view.evaluateJavascript(
+                            "(function(){var m=document.querySelector('meta[name=viewport]');"
+                                    + "if(m){m.setAttribute('content','width=1280');}"
+                                    + "document.documentElement.style.width='1280px';})()", null);
+                }
+                super.onPageFinished(view, url);
+            }
+        });
         setContentView(web);
 
         requestStoragePermission();
@@ -88,14 +112,36 @@ public class MainActivity extends Activity {
         }).start();
     }
 
+    private void applyDisplayMode() {
+        WebSettings s = web.getSettings();
+        if (desktopMode) {
+            s.setUserAgentString(DESKTOP_UA);
+            s.setUseWideViewPort(true);
+            s.setLoadWithOverviewMode(true);
+        } else {
+            s.setUserAgentString(null);
+            s.setUseWideViewPort(false);
+            s.setLoadWithOverviewMode(false);
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, MENU_STOP, 0, "停止服务");
+        menu.add(0, MENU_MODE, 0, desktopMode ? "切换为手机版" : "切换为桌面版");
+        menu.add(0, MENU_STOP, 1, "停止服务");
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == MENU_MODE) {
+            desktopMode = !desktopMode;
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean("desktop", desktopMode).apply();
+            applyDisplayMode();
+            invalidateOptionsMenu();
+            web.reload();
+            return true;
+        }
         if (item.getItemId() == MENU_STOP) {
             stopped = true;
             stopService(new Intent(this, TomatoService.class));

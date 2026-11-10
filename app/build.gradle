@@ -11,8 +11,8 @@ android {
         minSdk 24
         // 28 是关键：允许执行应用私有目录里的可执行文件（W^X 限制从 targetSdk 29 开始）
         targetSdk 28
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
     }
 
     buildTypes {
