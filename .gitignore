@@ -4,3 +4,4 @@ local.properties
 app/src/main/assets/tnd
 *.iml
 .idea/
+app/src/main/assets/THIRD_PARTY_LICENSES.txt

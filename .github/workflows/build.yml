@@ -30,6 +30,9 @@ jobs:
           ls -l app/src/main/assets/tnd
           test -s app/src/main/assets/tnd
 
+      - name: Bundle third-party license
+        run: cp THIRD_PARTY_LICENSES.md app/src/main/assets/THIRD_PARTY_LICENSES.txt
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
